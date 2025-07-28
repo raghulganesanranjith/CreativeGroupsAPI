@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CreativeGroupsAPI.Models
 {
@@ -14,9 +15,25 @@ namespace CreativeGroupsAPI.Models
         public int CompanyId { get; set; }
         public Company Company { get; set; }
         public string Name { get; set; }
-        public DateTime JoiningDate { get; set; }
+        
+        private DateTime _joiningDate;
+        [Column(TypeName = "timestamp with time zone")]
+        public DateTime JoiningDate 
+        { 
+            get => _joiningDate;
+            set => _joiningDate = value.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(value, DateTimeKind.Utc) : value.ToUniversalTime();
+        }
 
-        public DateTime? LeavingDate { get; set; }
+        private DateTime? _leavingDate;
+        [Column(TypeName = "timestamp with time zone")]
+        public DateTime? LeavingDate 
+        { 
+            get => _leavingDate;
+            set => _leavingDate = value.HasValue ? 
+                (value.Value.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc) : value.Value.ToUniversalTime()) 
+                : null;
+        }
+        
         public string PFNumber { get; set; }
         public string ESINumber { get; set; }
         public bool IsActive { get; set; } = true;

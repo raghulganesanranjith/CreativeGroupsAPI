@@ -535,7 +535,7 @@ namespace CreativeGroupsAPI.Controllers
                 
                 // Convert to bytes
                 var fileBytes = Encoding.UTF8.GetBytes(ecrTextContent.ToString());
-                var fileName = $"ECR_Challan_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                var fileName = $"ECR_Challan_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
                 
                 Console.WriteLine($"Generated ECR TXT file: {fileName}, Size: {fileBytes.Length} bytes");
                 
@@ -637,7 +637,7 @@ namespace CreativeGroupsAPI.Controllers
                         workbook.SaveAs(stream);
                         stream.Position = 0; // Reset stream position
                         
-                        var fileName = $"ECR_Challan_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                        var fileName = $"ECR_Challan_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx";
                         var fileBytes = stream.ToArray();
                         
                         Console.WriteLine($"Generated ECR file: {fileName}, Size: {fileBytes.Length} bytes");
@@ -728,7 +728,7 @@ namespace CreativeGroupsAPI.Controllers
 
                 try
                 {
-                    var finalFileName = $"ESI_Report_{payrollMonth.Month}_{DateTime.Now:yyyyMMdd_HHmmss}.xls";
+                    var finalFileName = $"ESI_Report_{payrollMonth.Month}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xls";
                     
                     Console.WriteLine("Generating ESI report using NPOI for proper .xls format");
                     
@@ -943,7 +943,7 @@ namespace CreativeGroupsAPI.Controllers
                     workbook.Write(stream);
                     var fileBytes = stream.ToArray();
                     
-                    var fileName = $"ESI_Report_{payrollMonth.Month}_{DateTime.Now:yyyyMMdd_HHmmss}.xls";
+                    var fileName = $"ESI_Report_{payrollMonth.Month}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xls";
                     
                     Console.WriteLine($"Generated fallback ESI file using NPOI: {fileName}");
                     

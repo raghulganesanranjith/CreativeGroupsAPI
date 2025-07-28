@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CreativeGroupsAPI.Models
 {
@@ -26,7 +27,14 @@ namespace CreativeGroupsAPI.Models
         // Status fields
         public string Error { get; set; }
         public bool Committed { get; set; } = false;
-        public DateTime UploadedAt { get; set; } = DateTime.Now;
+        
+        private DateTime _uploadedAt = DateTime.UtcNow;
+        [Column(TypeName = "timestamp with time zone")]
+        public DateTime UploadedAt 
+        { 
+            get => _uploadedAt;
+            set => _uploadedAt = value.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(value, DateTimeKind.Utc) : value.ToUniversalTime();
+        }
         
         // Navigation properties
         public Company Company { get; set; }

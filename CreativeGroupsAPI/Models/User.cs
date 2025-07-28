@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CreativeGroupsAPI.Models
 {
@@ -20,7 +21,14 @@ namespace CreativeGroupsAPI.Models
         public Organization? Organization { get; set; }
         
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        
+        private DateTime _createdDate = DateTime.UtcNow;
+        [Column(TypeName = "timestamp with time zone")]
+        public DateTime CreatedDate 
+        { 
+            get => _createdDate;
+            set => _createdDate = value.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(value, DateTimeKind.Utc) : value.ToUniversalTime();
+        }
     }
 
     public enum UserRole
