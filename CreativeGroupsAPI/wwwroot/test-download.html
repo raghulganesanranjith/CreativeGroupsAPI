@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PF Download Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            background: #f5f5f5;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 4px;
+            min-height: 20px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PF Download Test</h1>
+        <p>This page tests the PF ECR Challan download functionality</p>
+        
+        <div class="input-group">
+            <label for="companyId">Company ID:</label>
+            <input type="number" id="companyId" value="1" placeholder="Enter Company ID">
+        </div>
+        
+        <div class="input-group">
+            <label for="payrollMonthId">Payroll Month ID:</label>
+            <input type="number" id="payrollMonthId" value="1" placeholder="Enter Payroll Month ID">
+        </div>
+        
+        <button onclick="testCanDownload()">Test Can Download</button>
+        <button onclick="downloadPFReport()">Download PF Report</button>
+        <button onclick="downloadViaForm()">Download via Form</button>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        function setStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        async function testCanDownload() {
+            const companyId = document.getElementById('companyId').value;
+            const payrollMonthId = document.getElementById('payrollMonthId').value;
+            
+            if (!companyId || !payrollMonthId) {
+                setStatus('Please enter both Company ID and Payroll Month ID', 'error');
+                return;
+            }
+            
+            try {
+                setStatus('Checking download eligibility...', 'info');
+                
+                const response = await fetch(`/api/PayrollUpload/can-download/${companyId}/${payrollMonthId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    setStatus(`Download allowed: ${data.canDownload}`, 'success');
+                } else {
+                    setStatus(`Cannot download: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                setStatus(`Error checking download: ${error.message}`, 'error');
+            }
+        }
+
+        async function downloadPFReport() {
+            const companyId = document.getElementById('companyId').value;
+            const payrollMonthId = document.getElementById('payrollMonthId').value;
+            
+            if (!companyId || !payrollMonthId) {
+                setStatus('Please enter both Company ID and Payroll Month ID', 'error');
+                return;
+            }
+            
+            try {
+                setStatus('Downloading PF Report...', 'info');
+                
+                const response = await fetch(`/api/PayrollUpload/download-pf/${companyId}/${payrollMonthId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    }
+                });
+
+                if (!response.ok) {
+                    // Handle error responses (these will be JSON)
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Download failed');
+                }
+
+                // Handle successful file download as binary
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                // Get filename from Content-Disposition header if available
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `ECR_Challan_${new Date().toISOString().slice(0,10)}.xlsx`;
+                if (contentDisposition) {
+                    const matches = contentDisposition.match(/filename="(.+)"/);
+                    if (matches) {
+                        filename = matches[1];
+                    }
+                }
+                
+                // Create download link
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                setStatus(`Successfully downloaded: ${filename}`, 'success');
+                
+            } catch (error) {
+                console.error('Download error:', error);
+                setStatus(`Error downloading PF report: ${error.message}`, 'error');
+            }
+        }
+
+        function downloadViaForm() {
+            const companyId = document.getElementById('companyId').value;
+            const payrollMonthId = document.getElementById('payrollMonthId').value;
+            
+            if (!companyId || !payrollMonthId) {
+                setStatus('Please enter both Company ID and Payroll Month ID', 'error');
+                return;
+            }
+            
+            setStatus('Downloading via form submission...', 'info');
+            
+            // Create a temporary form for file download
+            const form = document.createElement('form');
+            form.method = 'GET';
+            form.action = `/api/PayrollUpload/download-pf/${companyId}/${payrollMonthId}`;
+            form.style.display = 'none';
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+            
+            setTimeout(() => {
+                setStatus('Download initiated via form submission', 'success');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
