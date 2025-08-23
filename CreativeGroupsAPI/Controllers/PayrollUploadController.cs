@@ -381,9 +381,18 @@ namespace CreativeGroupsAPI.Controllers
         [HttpPut("update-entry/{id}")]
         public async Task<IActionResult> UpdatePayrollEntry(int id, [FromBody] UpdatePayrollEntryRequest request)
         {
-            var entry = await _context.PayrollEntry.FindAsync(id);
+            var entry = await _context.PayrollEntry
+                .Include(pe => pe.Employee)
+                .FirstOrDefaultAsync(pe => pe.Id == id);
+            
             if (entry == null)
                 return NotFound("Payroll entry not found.");
+
+            // Validation logic for reason and leaving date
+            if (request.Reason == 2 && entry.Employee.LeavingDate == null)
+            {
+                return BadRequest(new { message = "If reason is 2, leaving date is mandatory" });
+            }
 
             var payrollMonth = await _context.PayrollMonth.FindAsync(entry.PayrollMonthId);
             var totalDaysInMonth = payrollMonth.TotalDays; // Use TotalDays field directly
@@ -469,15 +478,17 @@ namespace CreativeGroupsAPI.Controllers
             {
                 Console.WriteLine($"Starting PF download for company {companyId}, payroll month {payrollMonthId}");
                 
-                // Get payroll data for ECR generation (excluding leaving employees)
+                // Get payroll data for ECR generation (filter based on reason)
+                // Include: reason 1 (always), reason 0 (normal employees with working days > 0)
+                // Exclude: reason 2 (terminated employees)
                 var payrollData = await _context.PayrollEntry
                     .Include(pe => pe.Employee)
                     .Where(pe => pe.CompanyId == companyId && 
                                 pe.PayrollMonthId == payrollMonthId &&
                                 pe.Employee.IsActive == true &&
                                 !string.IsNullOrWhiteSpace(pe.Employee.PFNumber) &&
-                                pe.Employee.LeavingDate == null && // Exclude employees with leaving date
-                                pe.WorkingDays > 0) // Only include employees with working days > 0
+                                (pe.Reason == 1 || // Always include reason 1 for PF
+                                 (pe.Reason != 2 && pe.WorkingDays > 0))) // Include others except reason 2
                     .OrderBy(pe => pe.Employee.Name)
                     .ToListAsync();
 
