@@ -503,7 +503,7 @@ namespace CreativeGroupsAPI.Controllers
                 var ecrTextContent = new StringBuilder();
                 
                 // Add header line for TXT format
-                ecrTextContent.AppendLine("UAN#~#Employee Name#~#Gross Wages#~#EPF Wages#~#EPS Wages#~#EDLI Wages#~#EE Share#~#EPS Contribution#~#ER Share#~#NCP Days#~#Reason#~#Refund");
+                //ecrTextContent.AppendLine("UAN#~#Employee Name#~#Gross Wages#~#EPF Wages#~#EPS Wages#~#EDLI Wages#~#EE Share#~#EPS Contribution#~#ER Share#~#NCP Days#~#Reason#~#Refund");
                 
                 decimal totalEEShare = 0;
                 decimal totalEPSContribution = 0;
@@ -531,7 +531,7 @@ namespace CreativeGroupsAPI.Controllers
 
                 // Add totals line
                 var totalLine = $"TOTAL#~##~##~##~##~##~#{totalEEShare}#~#{totalEPSContribution}#~#{totalERShare}#~##~##~#";
-                ecrTextContent.AppendLine(totalLine);
+               // ecrTextContent.AppendLine(totalLine);
                 
                 // Convert to bytes
                 var fileBytes = Encoding.UTF8.GetBytes(ecrTextContent.ToString());
